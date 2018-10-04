@@ -1,20 +1,17 @@
 #include "kernelManager.h"
-
 #include "arrayfire.h"
 #include <af/opencl.h>
+
 using namespace std;
-int kernelManager::deviceIndex=0;
-cl_context kernelManager::context=nullptr;
+
+int kernelManager::deviceIndex = 0;
+cl_context kernelManager::context = nullptr;
 cl_device_id kernelManager::device_id = nullptr;
 cl_command_queue kernelManager::command_queue;
 std::map<std::string, cl_program> kernelManager::programTable;
 std::map<std::string, cl_kernel> kernelManager::kernelTable;
 char* kernelManager::kernelFile = "src/kernel.cl";
-bool kernelManager::ready=false;
-
-
-
-
+bool kernelManager::ready = false;
 
 void kernelManager::getPlatformsInfo()
 {
@@ -37,16 +34,21 @@ void kernelManager::getAllDeviceName() {
 	cl_device_id* device_id;
 	int device_count = 0;
 	for (int i = 0; i < platform_num; i++) {
-		clGetDeviceIDs(platform_id[i], CL_DEVICE_TYPE_ALL, NULL, NULL, &device_num);
+		clGetDeviceIDs(
+			platform_id[i], CL_DEVICE_TYPE_ALL, NULL, NULL, &device_num);
 		device_id = new cl_device_id[device_num];
-		clGetDeviceIDs(platform_id[i], CL_DEVICE_TYPE_ALL, device_num, device_id, NULL);
+		clGetDeviceIDs(
+			platform_id[i], CL_DEVICE_TYPE_ALL, device_num, device_id, NULL);
 		size_t name_size;
 		char* device_name;
 		for (int j = 0; j < device_num; j++) {
-			clGetDeviceInfo(device_id[j], CL_DEVICE_NAME, NULL, NULL, &name_size);
+			clGetDeviceInfo(
+				device_id[j], CL_DEVICE_NAME, NULL, NULL, &name_size);
 			device_name = new char[name_size];
-			clGetDeviceInfo(device_id[j], CL_DEVICE_NAME, name_size, device_name, NULL);
-			std::cout << "Device " << device_count << ": " << device_name << std::endl;
+			clGetDeviceInfo(
+				device_id[j], CL_DEVICE_NAME, name_size, device_name, NULL);
+			std::cout << "Device " << device_count << ": " <<
+				device_name << std::endl;
 			device_count++;
 			delete[] device_name;
 		}
@@ -57,10 +59,10 @@ void kernelManager::getAllDeviceName() {
 
 void kernelManager::showDeviceInfo()
 {
-	char * 	d_name = new char[40 ];
-	char * 	d_platform = new char[40];
-	char * 	d_toolkit = new char[40];
-	char * 	d_compute = new char[40];
+	char *	d_name = new char[40 ];
+	char *	d_platform = new char[40];
+	char *	d_toolkit = new char[40];
+	char *	d_compute = new char[40];
 	af::deviceInfo(d_name,
 		d_platform,
 		d_toolkit,
@@ -78,31 +80,38 @@ void kernelManager::getDeviceFullInfo(int device_index)
 	cl_device_id device = getDeviceID(device_index);
 	cl_device_type type;
 	clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(type), &type, NULL);
-	if (type & CL_DEVICE_TYPE_DEFAULT) printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_DEFAULT");
-	if (type & CL_DEVICE_TYPE_CPU) printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_CPU");
-	if (type & CL_DEVICE_TYPE_GPU) printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_GPU");
-	if (type & CL_DEVICE_TYPE_ACCELERATOR) printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_ACCELERATOR");
-	if (type & CL_DEVICE_TYPE_CUSTOM) printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_CUSTOM");
-	 (clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(buffer), buffer, NULL));
+	if (type & CL_DEVICE_TYPE_DEFAULT)
+		printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_DEFAULT");
+	if (type & CL_DEVICE_TYPE_CPU)
+		printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_CPU");
+	if (type & CL_DEVICE_TYPE_GPU)
+		printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_GPU");
+	if (type & CL_DEVICE_TYPE_ACCELERATOR)
+		printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_ACCELERATOR");
+	if (type & CL_DEVICE_TYPE_CUSTOM)
+		printf("CL_DEVICE_TYPE: %s\n", "CL_DEVICE_TYPE_CUSTOM");
+	(clGetDeviceInfo(device, CL_DEVICE_NAME, sizeof(buffer), buffer, NULL));
 	printf("CL_DEVICE_NAME: %s\n", buffer);
-	 (clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL));
 	printf("CL_DEVICE_VENDOR: %s\n", buffer);
 	cl_uint vendor_id;
-	 (clGetDeviceInfo(device, CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_VENDOR_ID, sizeof(vendor_id), &vendor_id, NULL));
 	printf("CL_DEVICE_VENDOR_ID: %d\n", vendor_id);
-	 (clGetDeviceInfo(device, CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL));
 	printf("CL_DEVICE_VERSION: %s\n", buffer);
-	 (clGetDeviceInfo(device, CL_DRIVER_VERSION, sizeof(buffer), buffer, NULL));
+	(clGetDeviceInfo(device, CL_DRIVER_VERSION, sizeof(buffer), buffer, NULL));
 	printf("CL_DRIVER_VERSION: %s\n", buffer);
-	 (clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_VERSION, sizeof(buffer), buffer, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_OPENCL_C_VERSION, sizeof(buffer), buffer, NULL));
 	printf("CL_DEVICE_OPENCL_C_VERSION: %s\n", buffer);
-	 (clGetDeviceInfo(device, CL_DEVICE_PROFILE, sizeof(buffer), buffer, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_PROFILE, sizeof(buffer), buffer, NULL));
 	printf("CL_DEVICE_PROFILE: %s\n", buffer);
-	 (clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_EXTENSIONS, sizeof(buffer), buffer, NULL));
 	printf("CL_DEVICE_EXTENSIONS: %s\n", buffer);
-	printf("CL_DEVICE_BUILT_IN_KERNELS: %s\n", clGetDeviceInfo(device, CL_DEVICE_BUILT_IN_KERNELS, sizeof(buffer), buffer, NULL) == CL_SUCCESS ? buffer : "UNSUPPORTED");
+	printf(
+		"CL_DEVICE_BUILT_IN_KERNELS: %s\n",
+		clGetDeviceInfo(device, CL_DEVICE_BUILT_IN_KERNELS, sizeof(buffer), buffer, NULL) == CL_SUCCESS ? buffer : "UNSUPPORTED");
 	cl_uint max_compute_units;
-	 (clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(max_compute_units), &max_compute_units, NULL));
+	(clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(max_compute_units), &max_compute_units, NULL));
 	printf("CL_DEVICE_MAX_COMPUTE_UNITS: %u\n", max_compute_units);
 	cl_uint max_work_item_dimensions;
 	 (clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(max_work_item_dimensions), &max_work_item_dimensions, NULL));
@@ -253,9 +262,7 @@ void kernelManager::setDevice(int device)
 	cl_device_id device_id = getDeviceID(device);
 	afcl::setDevice(device_id,afcl::getContext());
 	initializeManager();
-
 }
-
 
 cl_kernel kernelManager::createKernel(const char * filename, const char * kernel)
 {
@@ -264,7 +271,8 @@ cl_kernel kernelManager::createKernel(const char * filename, const char * kernel
 	if (kernelTable.find(string(kernel)) != kernelTable.end())
 		return kernelTable[string(kernel)];
 	cl_int error;
-	cl_kernel dev_kernel = clCreateKernel(programTable[string(filename)], kernel, &error);
+	cl_kernel dev_kernel =
+		clCreateKernel(programTable[string(filename)], kernel, &error);
 	
 	switch (error) {
 	case 0:
@@ -282,8 +290,6 @@ cl_kernel kernelManager::createKernel(const char * kernel)
 {
 	return createKernel(kernelFile, kernel);
 }
-
-
 
 void kernelManager::loadProgram(const char* filename)
 {
@@ -311,7 +317,8 @@ void kernelManager::loadProgram(const char* filename)
 	// create and build program 
 	cl_int error = 0;
 	const char* source = &data[0];
-	cl_program program = clCreateProgramWithSource(context, 1, &source, 0, &error);
+	cl_program program =
+		clCreateProgramWithSource(context, 1, &source, 0, &error);
 	if (error != CL_SUCCESS) {
 		cout << "Fail to read program, error code: " << error << endl;
 		return;
@@ -326,7 +333,9 @@ void kernelManager::loadProgram(const char* filename)
 		// Allocate memory for the log
 		char *log = (char *)malloc(log_size);
 		// Get the log
-		clGetProgramBuildInfo(program, afcl::getDeviceId(), CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+		clGetProgramBuildInfo(
+			program, afcl::getDeviceId(), CL_PROGRAM_BUILD_LOG, log_size, log,
+			NULL);
 		// Print the log
 		printf("%s\n", log);
 		delete[] log;
@@ -334,8 +343,6 @@ void kernelManager::loadProgram(const char* filename)
 	}
 	programTable.insert(make_pair(string(filename), program));
 }
-
-
 
 void kernelManager::initializeManager()
 {
@@ -363,9 +370,11 @@ cl_device_id kernelManager::getDeviceID(int k)
 	cl_device_id* device_id;
 	int device_count = 0;
 	for (int i = 0; i < platform_num; i++) {
-		clGetDeviceIDs(platform_id[i], CL_DEVICE_TYPE_ALL, NULL, NULL, &device_num);
+		clGetDeviceIDs(platform_id[i], CL_DEVICE_TYPE_ALL, NULL, NULL,
+					   &device_num);
 		device_id = new cl_device_id[device_num];
-		clGetDeviceIDs(platform_id[i], CL_DEVICE_TYPE_ALL, device_num, device_id, NULL);
+		clGetDeviceIDs(platform_id[i], CL_DEVICE_TYPE_ALL, device_num,
+					   device_id, NULL);
 		size_t name_size;
 		char* device_name;
 		if (k - device_count >= device_num)

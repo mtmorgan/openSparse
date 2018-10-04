@@ -1,14 +1,13 @@
 #include "sparseMatrix.h"
 #include "CommonHeader.h"
-#include"Tools.h"
-//#include "Tools.h"
-using namespace af;
+#include "Tools.h"
 
+using namespace af;
 
 //not quite useful now
 template<class T>
-sparseMatrix<T>::sparseMatrix(T* dataVector, double * rowVector, double* colVector, double* size, double* offset) {
-	
+sparseMatrix<T>::sparseMatrix(T* dataVector, double * rowVector, double* colVector, double* size, double* offset)
+{
 	cpyData((int *)rowVector, rowVector, (dim_t)size[1]);
 	data = new array((dim_t)size[0], dataVector);
 	rowInd = new array((dim_t)size[1], (int*)rowVector);
@@ -45,6 +44,7 @@ sparseMatrix<T>::~sparseMatrix()
 		deviceGC();
 	}
 }
+
 
 template<class T>
 void sparseMatrix<T>::unlock()
